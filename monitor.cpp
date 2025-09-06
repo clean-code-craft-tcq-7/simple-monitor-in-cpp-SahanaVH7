@@ -3,36 +3,47 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
-using std::cout, std::flush, std::this_thread::sleep_for, std::chrono::seconds;
 
+using namespace std;
+using namespace std::this_thread;
+using namespace std::chrono;
+
+// Pure function: only checks values, no I/O
+bool checkVitals(float temperature, float pulseRate, float spo2, string& message) {
+    if (temperature > 102 || temperature < 95) {
+        message = "Temperature is critical!";
+        return false;
+    }
+    if (pulseRate < 60 || pulseRate > 100) {
+        message = "Pulse Rate is out of range!";
+        return false;
+    }
+    if (spo2 < 90) {
+        message = "Oxygen Saturation out of range!";
+        return false;
+    }
+    return true;
+}
+
+// Reusable function: handles blinking alert animation
+void showAlert(const string& message, int blinkCount = 6, int delaySeconds = 1) {
+    cout << message << "\n";
+    for (int i = 0; i < blinkCount; i++) {
+        cout << "\r* " << flush;
+        sleep_for(seconds(delaySeconds));
+        cout << "\r *" << flush;
+        sleep_for(seconds(delaySeconds));
+    }
+    cout << "\n";
+}
+
+// Wrapper: ties pure check with UI/animation
 int vitalsOk(float temperature, float pulseRate, float spo2) {
-  if (temperature > 102 || temperature < 95) {
-    cout << "Temperature is critical!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
+    string message;
+    bool ok = checkVitals(temperature, pulseRate, spo2, message);
+    if (!ok) {
+        showAlert(message);
+        return 0;
     }
-    return 0;
-  } else if (pulseRate < 60 || pulseRate > 100) {
-    cout << "Pulse Rate is out of range!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
-    return 0;
-  } else if (spo2 < 90) {
-    cout << "Oxygen Saturation out of range!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
-    return 0;
-  }
-  return 1;
+    return 1;
 }
